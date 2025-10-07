@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best TV Shows - Episode Ratings</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📺 Best TV Shows</h1>
+            <p class="subtitle">Explore episode ratings with interactive heatmaps</p>
+        </header>
+        
+        <main>
+            <div class="controls">
+                <div class="search-container">
+                    <div class="select-wrapper">
+                        <input type="text" id="show-search" placeholder="Type to search or click arrow to see all shows..." autocomplete="off">
+                        <button type="button" id="clear-button" class="clear-button" aria-label="Clear selection" style="display: none;">×</button>
+                        <button type="button" id="dropdown-arrow" class="dropdown-arrow" aria-label="Show all shows">▼</button>
+                        <div id="show-dropdown" class="show-dropdown" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="threshold-controls">
+                    <div class="dual-slider-container">
+                        <div class="slider-track">
+                            <div class="slider-range" id="slider-range"></div>
+                        </div>
+                        <div class="thumb-label thumb-label-1" id="thumb-label-1">7.0</div>
+                        <div class="thumb-label thumb-label-2" id="thumb-label-2">8.0</div>
+                        <input type="range" id="consider-slider" class="slider-thumb slider-thumb-1" min="5.0" max="9.5" step="0.1" value="7.0" title="Consider threshold">
+                        <input type="range" id="must-watch-slider" class="slider-thumb slider-thumb-2" min="5.0" max="9.5" step="0.1" value="8.0" title="Must watch threshold">
+                    </div>
+                    <div class="slider-tooltip" id="slider-tooltip" style="display: none;">
+                        <div class="tooltip-content">
+                            <div class="tooltip-row">🔴 Skip: <strong id="tooltip-skip">< 7.0</strong></div>
+                            <div class="tooltip-row">🟡 Consider: <strong id="tooltip-consider">7.0 - 8.0</strong></div>
+                            <div class="tooltip-row">🟢 Must Watch: <strong id="tooltip-must-watch">≥ 8.0</strong></div>
+                        </div>
+                    </div>
+                    <div class="episode-counts" id="episode-counts" style="display: none;">
+                        <span class="count-item count-skip">
+                            <span id="skip-count">0</span> skip
+                        </span>
+                        <span class="count-separator">•</span>
+                        <span class="count-item count-consider">
+                            <span id="consider-count">0</span> consider
+                        </span>
+                        <span class="count-separator">•</span>
+                        <span class="count-item count-must-watch">
+                            <span id="must-watch-count">0</span> must watch
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading TV show data...</p>
+            </div>
+            
+            <div id="show-info" class="show-info" style="display: none;">
+                <h2 id="show-title"></h2>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Total Episodes:</span>
+                        <span class="stat-value" id="total-episodes">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Average Rating:</span>
+                        <span class="stat-value" id="avg-rating">0.0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Seasons:</span>
+                        <span class="stat-value" id="total-seasons">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="legend" class="legend" style="display: none;">
+                <h3>Rating Legend</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color excellent"></span>
+                        <span id="legend-excellent">Must Watch (≥ 8.0)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color good"></span>
+                        <span id="legend-good">Consider (≥ 7.0)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color average"></span>
+                        <span id="legend-average">Skip (< 7.0)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="heatmap-container" class="heatmap-container" style="display: none;">
+                <div id="heatmap"></div>
+            </div>
+
+            <div id="must-watch-table-container" class="must-watch-table-container" style="display: none;">
+                <h3>Must Watch Episodes <span id="must-watch-count-title" class="count-badge"></span></h3>
+                <div class="table-wrapper">
+                    <table id="must-watch-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="season">Season <span class="sort-indicator">▲</span></th>
+                                <th class="sortable" data-sort="episode">Episode <span class="sort-indicator"></span></th>
+                                <th class="sortable" data-sort="title">Title <span class="sort-indicator"></span></th>
+                                <th class="sortable" data-sort="rating">Rating <span class="sort-indicator"></span></th>
+                                <th class="sortable" data-sort="votes">Votes <span class="sort-indicator"></span></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="must-watch-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
