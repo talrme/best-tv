@@ -7,12 +7,16 @@ An interactive web application that visualizes TV show episode ratings using dyn
 ## ✨ Features
 
 ### 🎨 Interactive Heatmap
+- Clean, professional grid layout with labeled Season and Episode axes
 - Visual representation of episode ratings across all seasons
 - Color-coded cells: Green (Must Watch), Yellow (Consider), Red (Skip)
-- Hover over any episode to see detailed information
+- Smart grid alignment that handles seasons with varying episode counts
+- Hover over any episode to see detailed information including title, rating, and votes
 - Smooth animations when loading new shows
+- Click any cell to open the episode on IMDb
 
 ### 🔍 Smart Search
+- Loads with Community by default for immediate exploration
 - Searchable dropdown with autocomplete
 - Browse through an extensive collection of TV shows
 - Quick clear button to reset your selection
@@ -36,11 +40,12 @@ An interactive web application that visualizes TV show episode ratings using dyn
 
 ## 🚀 How to Use
 
-1. **Select a Show**: Click the dropdown or start typing to search for a TV show
-2. **View the Heatmap**: See all episodes color-coded by rating
-3. **Adjust Thresholds**: Use the dual slider to customize rating categories
-4. **Explore Episodes**: Check out the Must Watch Episodes table below
-5. **Share**: Copy the URL to share your view with custom settings
+1. **View Default Show**: Community loads automatically when you first visit
+2. **Select a Different Show**: Click the dropdown or start typing to search for any TV show
+3. **View the Heatmap**: See all episodes color-coded by rating in an intuitive grid layout
+4. **Adjust Thresholds**: Use the dual slider to customize rating categories
+5. **Explore Episodes**: Check out the Must Watch Episodes table below
+6. **Share**: Copy the URL to share your view with custom settings
 
 ## 🛠️ Technologies Used
 
@@ -62,9 +67,11 @@ Episode data is fetched from a public Google Spreadsheet containing:
 
 - **No Dependencies**: Built with vanilla JavaScript for fast loading
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **Modern UI**: Clean, professional interface with smooth animations
+- **Modern UI**: Clean, professional interface with custom banner and smooth animations
+- **Intuitive Layout**: Clear Season/Episode labeling with smart grid alignment
 - **Performance Optimized**: Efficient rendering even for shows with 100+ episodes
 - **Accessibility**: Keyboard navigation and ARIA labels
+- **Data Accuracy**: Automatically filters out episodes with missing ratings
 
 ## 📱 Responsive Design
 
@@ -91,3 +98,8 @@ Feel free to fork this repository and submit pull requests with improvements!
 ---
 
 Made with ❤️ for TV lovers everywhere
+
+
+
+
+

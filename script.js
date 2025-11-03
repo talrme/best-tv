@@ -49,10 +49,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Check for show parameter in URL
     const showParam = urlParams.get('show');
+    const searchInput = document.getElementById('show-search');
+    
     if (showParam) {
         // Decode and find matching show
         const decodedShow = decodeURIComponent(showParam);
-        const searchInput = document.getElementById('show-search');
         
         // Try to find exact match or case-insensitive match
         const matchingShow = Object.keys(showsData).find(
@@ -62,6 +63,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (matchingShow) {
             searchInput.value = matchingShow;
             displayShow(matchingShow);
+        }
+    } else {
+        // Default to Community if no show specified
+        const defaultShow = 'Community';
+        if (showsData[defaultShow]) {
+            searchInput.value = defaultShow;
+            displayShow(defaultShow);
+            document.getElementById('clear-button').style.display = 'block';
         }
     }
 });
@@ -485,6 +494,9 @@ function displayShow(showName) {
     
     currentShow = showName;
     
+    // Filter out episode 0 and episodes without ratings for accurate stats
+    const validEpisodes = episodes.filter(ep => ep.episode > 0 && ep.rating > 0);
+    
     // Update episode counts
     updateEpisodeCounts(episodes);
     
@@ -496,13 +508,13 @@ function displayShow(showName) {
     const totalSeasonsEl = document.getElementById('total-seasons');
     
     showTitleEl.textContent = showName;
-    totalEpisodesEl.textContent = episodes.length;
+    totalEpisodesEl.textContent = validEpisodes.length;
     
-    const avgRating = episodes.reduce((sum, ep) => sum + ep.rating, 0) / episodes.length;
+    const avgRating = validEpisodes.reduce((sum, ep) => sum + ep.rating, 0) / validEpisodes.length;
     avgRatingEl.textContent = avgRating.toFixed(2);
     
-    const seasons = new Set(episodes.map(ep => ep.season));
-    totalSeasonsEl.textContent = seasons.size;
+    const validSeasons = new Set(validEpisodes.map(ep => ep.season));
+    totalSeasonsEl.textContent = validSeasons.size;
     
     // Create heatmap
     createHeatmap(episodes);
@@ -539,14 +551,34 @@ function createHeatmap(episodes) {
         .filter(season => Object.keys(grid[season]).length > 0)
         .sort((a, b) => a - b);
     
-    // Create season headers
+    // Create main container with Episode label on left
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'heatmap-main-container';
+    
+    // Create vertical Episode label
+    const episodeLabel = document.createElement('div');
+    episodeLabel.className = 'episode-label-vertical';
+    episodeLabel.textContent = 'Episode';
+    mainContainer.appendChild(episodeLabel);
+    
+    // Create grid container with Season header
+    const gridWithHeader = document.createElement('div');
+    gridWithHeader.className = 'grid-with-header';
+    
+    // Add "Season" label
+    const seasonHeaderLabel = document.createElement('div');
+    seasonHeaderLabel.className = 'season-header-label';
+    seasonHeaderLabel.textContent = 'Season';
+    gridWithHeader.appendChild(seasonHeaderLabel);
+    
+    // Create season numbers row
     const headerRow = document.createElement('div');
     headerRow.className = 'season-header';
     
     sortedSeasons.forEach((season, index) => {
         const label = document.createElement('div');
         label.className = 'season-label';
-        label.textContent = `S${season}`;
+        label.textContent = season; // Just the number, not "S" prefix
         
         // Add animation delay (unless disabled)
         if (disableAnimation) {
@@ -559,7 +591,7 @@ function createHeatmap(episodes) {
         headerRow.appendChild(label);
     });
     
-    heatmapEl.appendChild(headerRow);
+    gridWithHeader.appendChild(headerRow);
     
     // Calculate total number of cells for animation timing
     const totalCells = validEpisodes.length;
@@ -584,7 +616,7 @@ function createHeatmap(episodes) {
         // Row label
         const rowLabel = document.createElement('div');
         rowLabel.className = 'row-label';
-        rowLabel.textContent = `E${episodeNum}`;
+        rowLabel.textContent = episodeNum; // Just the number, not "E" prefix
         row.appendChild(rowLabel);
         
         // Episode cells
@@ -633,14 +665,20 @@ function createHeatmap(episodes) {
                 cell.addEventListener('mousemove', moveTooltip);
                 
                 row.appendChild(cell);
+            } else {
+                // Add empty placeholder cell to maintain grid alignment
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'episode-cell empty';
+                row.appendChild(emptyCell);
             }
-            // If no episode exists for this season/episode combo, don't add a cell at all
         });
         
         gridContainer.appendChild(row);
     }
     
-    heatmapEl.appendChild(gridContainer);
+    gridWithHeader.appendChild(gridContainer);
+    mainContainer.appendChild(gridWithHeader);
+    heatmapEl.appendChild(mainContainer);
 }
 
 let tooltip = null;

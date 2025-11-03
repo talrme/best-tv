@@ -20,11 +20,27 @@ body {
 
 header {
     text-align: center;
-    padding: 40px 20px;
+    padding: 0;
     background-color: #fff;
     border-radius: 16px;
     margin-bottom: 30px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+header a {
+    display: block;
+    transition: opacity 0.2s;
+}
+
+header a:hover {
+    opacity: 0.9;
+}
+
+.header-banner {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 h1 {
@@ -545,10 +561,45 @@ main .controls {
     padding-right: 8px;
 }
 
+/* Main container with Episode label and grid */
+.heatmap-main-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+/* Vertical Episode label (rotated 180 degrees) */
+.episode-label-vertical {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2c3e50;
+    padding: 10px;
+    margin-top: 50px;
+}
+
+/* Container for Season header and grid */
+.grid-with-header {
+    flex: 1;
+}
+
+/* "Season" text label */
+.season-header-label {
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
 .season-header {
     display: flex;
     gap: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 15px;
     margin-left: 48px;
 }
 
@@ -556,11 +607,9 @@ main .controls {
     min-width: 50px;
     text-align: center;
     font-size: 0.9rem;
-    color: #2c3e50;
-    font-weight: 700;
+    color: #667eea;
+    font-weight: 600;
     padding: 8px 4px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
     opacity: 0;
     animation: fadeInHeader 0.3s ease forwards;
 }
@@ -625,9 +674,9 @@ main .controls {
 }
 
 .episode-cell.empty {
-    background-color: #e0e0e0;
+    background-color: #ffffff;
     cursor: default;
-    border: 2px dashed #bdbdbd;
+    border: 2px solid #f0f0f0;
 }
 
 .episode-cell.empty:hover {
