@@ -2,6 +2,8 @@
 
 **[🌐 View Live Website](https://talrme.github.io/best-tv/)**
 
+**To add new shows:** [Google Colab notebook](https://colab.research.google.com/drive/1Bxuls9Ig4wuxerzQfcHJ0wRcz59XolU2#scrollTo=KsqTdDj--irx)
+
 An interactive web application that visualizes TV show episode ratings using dynamic heatmaps. Explore your favorite shows and discover which episodes are must-watch!
 
 ## ✨ Features
