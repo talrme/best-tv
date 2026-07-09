@@ -868,6 +868,23 @@ main .controls {
     font-size: 1.1rem;
 }
 
+.site-footer {
+    text-align: center;
+    padding: 28px 0 8px;
+}
+
+.site-footer a {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s ease;
+}
+
+.site-footer a:hover {
+    color: rgba(255, 255, 255, 0.75);
+}
+
 @media (max-width: 768px) {
     h1 {
         font-size: 2rem;
