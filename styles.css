@@ -43,6 +43,14 @@ header a:hover {
     display: block;
 }
 
+@media (min-width: 769px) {
+    .header-banner {
+        max-height: 180px;
+        object-fit: cover;
+        object-position: center;
+    }
+}
+
 h1 {
     color: #2c3e50;
     font-size: 3rem;
