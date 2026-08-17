@@ -18,7 +18,7 @@ An interactive web application that visualizes TV show episode ratings using dyn
 - Click any cell to open the episode on IMDb
 
 ### 🔍 Smart Search
-- Loads with Community by default for immediate exploration
+- Loads with Halt and Catch Fire by default for immediate exploration
 - Searchable dropdown with autocomplete
 - Browse through an extensive collection of TV shows
 - Quick clear button to reset your selection
@@ -42,7 +42,7 @@ An interactive web application that visualizes TV show episode ratings using dyn
 
 ## 🚀 How to Use
 
-1. **View Default Show**: Community loads automatically when you first visit
+1. **View Default Show**: Halt and Catch Fire loads automatically when you first visit
 2. **Select a Different Show**: Click the dropdown or start typing to search for any TV show
 3. **View the Heatmap**: See all episodes color-coded by rating in an intuitive grid layout
 4. **Adjust Thresholds**: Use the dual slider to customize rating categories
@@ -100,7 +100,6 @@ Feel free to fork this repository and submit pull requests with improvements!
 ---
 
 Made with ❤️ for TV lovers everywhere
-
 
 
 

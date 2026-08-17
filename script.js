@@ -3,6 +3,7 @@
 // Google Sheets URL - using gid=0 for the first sheet
 const SHEET_ID = '1B5iPZgD3AVaQQM9dFa-2V-lj5RGEPTClJi-gvlrmIJY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+const DEFAULT_SHOW = 'Halt and Catch Fire';
 
 let allData = [];
 let showsData = {};
@@ -65,8 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             displayShow(matchingShow);
         }
     } else {
-        // Default to Community if no show specified
-        const defaultShow = 'Community';
+        // Default show if no show is specified in the URL
+        const defaultShow = DEFAULT_SHOW;
         if (showsData[defaultShow]) {
             searchInput.value = defaultShow;
             displayShow(defaultShow);
