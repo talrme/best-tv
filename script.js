@@ -4,6 +4,16 @@
 const SHEET_ID = '1B5iPZgD3AVaQQM9dFa-2V-lj5RGEPTClJi-gvlrmIJY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
 const DEFAULT_SHOW = 'Halt and Catch Fire';
+const STORAGE_KEYS = {
+    lastShow: 'best-tv:last-show',
+    settings: 'best-tv:settings'
+};
+const DEFAULT_BROWSER_SETTINGS = {
+    rememberLastShow: true,
+    rememberThresholds: true,
+    density: 'comfortable',
+    reduceMotion: false
+};
 
 let allData = [];
 let showsData = {};
@@ -11,10 +21,110 @@ let currentShow = null;
 let mustWatchThreshold = 8.0;
 let considerThreshold = 7.0;
 let disableAnimation = false;
+let browserSettings = loadBrowserSettings();
+let refreshSliderVisuals = () => {};
+
+function readStorage(key) {
+    try {
+        return window.localStorage.getItem(key);
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeStorage(key, value) {
+    try {
+        window.localStorage.setItem(key, value);
+    } catch (error) {
+        // Browser-local preferences are helpful, but the site should keep working without them.
+    }
+}
+
+function removeStorage(key) {
+    try {
+        window.localStorage.removeItem(key);
+    } catch (error) {
+        // Ignore storage failures.
+    }
+}
+
+function loadBrowserSettings() {
+    try {
+        const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.settings) || '{}');
+        return { ...DEFAULT_BROWSER_SETTINGS, ...saved };
+    } catch (error) {
+        return { ...DEFAULT_BROWSER_SETTINGS };
+    }
+}
+
+function saveBrowserSettings() {
+    writeStorage(STORAGE_KEYS.settings, JSON.stringify(browserSettings));
+}
+
+function saveLastShow(showName) {
+    if (!browserSettings.rememberLastShow || !showName) return;
+    writeStorage(STORAGE_KEYS.lastShow, showName);
+}
+
+function getSavedLastShow() {
+    if (!browserSettings.rememberLastShow) return null;
+    return readStorage(STORAGE_KEYS.lastShow);
+}
+
+function clearSavedLastShow() {
+    removeStorage(STORAGE_KEYS.lastShow);
+}
+
+function saveThresholdSettings() {
+    if (!browserSettings.rememberThresholds) return;
+    browserSettings.considerThreshold = considerThreshold;
+    browserSettings.mustWatchThreshold = mustWatchThreshold;
+    saveBrowserSettings();
+}
+
+function clearThresholdSettings() {
+    delete browserSettings.considerThreshold;
+    delete browserSettings.mustWatchThreshold;
+    saveBrowserSettings();
+}
+
+function isValidThreshold(value) {
+    const numericValue = parseFloat(value);
+    return !isNaN(numericValue) && numericValue >= 5.0 && numericValue <= 9.5;
+}
+
+function getValidThreshold(value) {
+    return isValidThreshold(value) ? parseFloat(value) : null;
+}
+
+function safeDecodeShowName(showName) {
+    if (!showName) return '';
+    try {
+        return decodeURIComponent(showName);
+    } catch (error) {
+        return showName;
+    }
+}
+
+function findMatchingShow(showName) {
+    const decodedShow = safeDecodeShowName(showName);
+    if (!decodedShow) return null;
+    
+    return Object.keys(showsData).find(
+        show => show.toLowerCase() === decodedShow.toLowerCase()
+    );
+}
+
+function applyBrowserSettings() {
+    document.body.classList.toggle('compact-heatmap', browserSettings.density === 'compact');
+    document.body.classList.toggle('reduce-motion', browserSettings.reduceMotion);
+    updateSettingsModal();
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Best TV Shows website loaded');
     console.log('Fetching from:', SHEET_URL);
+    applyBrowserSettings();
     
     await loadData();
     setupEventListeners();
@@ -23,23 +133,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     
     // Load thresholds from URL if present
-    const considerParam = urlParams.get('consider');
-    const mustWatchParam = urlParams.get('mustWatch');
+    const considerParam = getValidThreshold(urlParams.get('consider'));
+    const mustWatchParam = getValidThreshold(urlParams.get('mustWatch'));
     
-    if (considerParam) {
-        const value = parseFloat(considerParam);
-        if (!isNaN(value) && value >= 5.0 && value <= 9.5) {
-            considerThreshold = value;
-            document.getElementById('consider-slider').value = value;
-        }
+    if (considerParam !== null) {
+        considerThreshold = considerParam;
+        document.getElementById('consider-slider').value = considerThreshold;
+    } else if (browserSettings.rememberThresholds && isValidThreshold(browserSettings.considerThreshold)) {
+        considerThreshold = browserSettings.considerThreshold;
+        document.getElementById('consider-slider').value = considerThreshold;
     }
     
-    if (mustWatchParam) {
-        const value = parseFloat(mustWatchParam);
-        if (!isNaN(value) && value >= 5.0 && value <= 9.5) {
-            mustWatchThreshold = value;
-            document.getElementById('must-watch-slider').value = value;
-        }
+    if (mustWatchParam !== null) {
+        mustWatchThreshold = mustWatchParam;
+        document.getElementById('must-watch-slider').value = mustWatchThreshold;
+    } else if (browserSettings.rememberThresholds && isValidThreshold(browserSettings.mustWatchThreshold)) {
+        mustWatchThreshold = browserSettings.mustWatchThreshold;
+        document.getElementById('must-watch-slider').value = mustWatchThreshold;
     }
     
     // Ensure thresholds are valid (must-watch > consider)
@@ -52,27 +162,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const showParam = urlParams.get('show');
     const searchInput = document.getElementById('show-search');
     
-    if (showParam) {
-        // Decode and find matching show
-        const decodedShow = decodeURIComponent(showParam);
-        
-        // Try to find exact match or case-insensitive match
-        const matchingShow = Object.keys(showsData).find(
-            show => show.toLowerCase() === decodedShow.toLowerCase()
-        );
-        
-        if (matchingShow) {
-            searchInput.value = matchingShow;
-            displayShow(matchingShow);
-        }
-    } else {
-        // Default show if no show is specified in the URL
-        const defaultShow = DEFAULT_SHOW;
-        if (showsData[defaultShow]) {
-            searchInput.value = defaultShow;
-            displayShow(defaultShow);
-            document.getElementById('clear-button').style.display = 'block';
-        }
+    const urlShow = findMatchingShow(showParam);
+    const savedShow = findMatchingShow(getSavedLastShow());
+    const startupShow = urlShow || savedShow || findMatchingShow(DEFAULT_SHOW);
+    
+    if (startupShow) {
+        searchInput.value = startupShow;
+        displayShow(startupShow, { remember: Boolean(urlShow || savedShow) });
+        document.getElementById('clear-button').style.display = 'block';
     }
 });
 
@@ -237,6 +334,7 @@ function setupEventListeners() {
     const tooltipConsider = document.getElementById('tooltip-consider');
     const tooltipMustWatch = document.getElementById('tooltip-must-watch');
     let arrowClicked = false;
+    setupSettingsControls();
     
     // Function to update slider visualization
     function updateSliderVisuals() {
@@ -275,6 +373,8 @@ function setupEventListeners() {
         tooltipConsider.textContent = `${considerThreshold.toFixed(1)} - ${mustWatchThreshold.toFixed(1)}`;
         tooltipMustWatch.textContent = `≥ ${mustWatchThreshold.toFixed(1)}`;
     }
+    
+    refreshSliderVisuals = updateSliderVisuals;
     
     // Initial update after a brief delay to ensure sliders are rendered
     setTimeout(() => {
@@ -328,10 +428,15 @@ function setupEventListeners() {
         e.stopPropagation();
         searchInput.value = '';
         clearButton.style.display = 'none';
+        currentShow = null;
         document.getElementById('heatmap').innerHTML = '';
+        document.getElementById('show-info').style.display = 'none';
+        document.getElementById('legend').style.display = 'none';
+        document.getElementById('heatmap-container').style.display = 'none';
         document.getElementById('must-watch-table-container').style.display = 'none';
         document.getElementById('episode-counts').style.display = 'none';
-        updateURL('', considerThreshold, mustWatchThreshold);
+        updateURL('');
+        updateSettingsModal();
         showDropdown('');
         searchInput.focus();
     });
@@ -386,8 +491,9 @@ function setupEventListeners() {
         // Refresh heatmap if a show is selected (without animation)
         if (currentShow) {
             disableAnimation = true;
-            displayShow(currentShow);
+            displayShow(currentShow, { remember: false });
         }
+        saveThresholdSettings();
         
         // Update URL with new threshold
         if (currentShow) {
@@ -411,8 +517,9 @@ function setupEventListeners() {
         // Refresh heatmap if a show is selected (without animation)
         if (currentShow) {
             disableAnimation = true;
-            displayShow(currentShow);
+            displayShow(currentShow, { remember: false });
         }
+        saveThresholdSettings();
         
         // Update URL with new threshold
         if (currentShow) {
@@ -428,6 +535,160 @@ function setupEventListeners() {
     considerSlider.addEventListener('change', () => {
         disableAnimation = false;
     });
+}
+
+function setupSettingsControls() {
+    const settingsButton = document.getElementById('settings-button');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsButton = document.getElementById('close-settings');
+    const rememberShowToggle = document.getElementById('remember-show-toggle');
+    const rememberThresholdsToggle = document.getElementById('remember-thresholds-toggle');
+    const reduceMotionToggle = document.getElementById('reduce-motion-toggle');
+    const densityButtons = document.querySelectorAll('.segmented-option[data-density]');
+    const forgetSavedShowButton = document.getElementById('forget-saved-show');
+    const resetDefaultShowButton = document.getElementById('reset-default-show');
+    const clearBrowserMemoryButton = document.getElementById('clear-browser-memory');
+    
+    if (!settingsButton || !settingsModal) return;
+    
+    function openSettings() {
+        updateSettingsModal();
+        settingsModal.classList.add('active');
+        settingsModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        closeSettingsButton?.focus();
+    }
+    
+    function closeSettings() {
+        settingsModal.classList.remove('active');
+        settingsModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        settingsButton.focus();
+    }
+    
+    settingsButton.addEventListener('click', openSettings);
+    closeSettingsButton?.addEventListener('click', closeSettings);
+    
+    settingsModal.addEventListener('click', (event) => {
+        if (event.target === settingsModal) {
+            closeSettings();
+        }
+    });
+    
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && settingsModal.classList.contains('active')) {
+            closeSettings();
+        }
+    });
+    
+    rememberShowToggle?.addEventListener('change', (event) => {
+        browserSettings.rememberLastShow = event.target.checked;
+        if (browserSettings.rememberLastShow && currentShow) {
+            saveLastShow(currentShow);
+        } else {
+            clearSavedLastShow();
+        }
+        saveBrowserSettings();
+        updateSettingsModal();
+    });
+    
+    rememberThresholdsToggle?.addEventListener('change', (event) => {
+        browserSettings.rememberThresholds = event.target.checked;
+        if (browserSettings.rememberThresholds) {
+            saveThresholdSettings();
+        } else {
+            clearThresholdSettings();
+        }
+        saveBrowserSettings();
+        updateSettingsModal();
+    });
+    
+    reduceMotionToggle?.addEventListener('change', (event) => {
+        browserSettings.reduceMotion = event.target.checked;
+        saveBrowserSettings();
+        applyBrowserSettings();
+    });
+    
+    densityButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            browserSettings.density = button.dataset.density;
+            saveBrowserSettings();
+            applyBrowserSettings();
+        });
+    });
+    
+    forgetSavedShowButton?.addEventListener('click', () => {
+        clearSavedLastShow();
+        updateSettingsModal();
+    });
+    
+    resetDefaultShowButton?.addEventListener('click', () => {
+        clearSavedLastShow();
+        showDefaultWithoutSaving();
+        updateSettingsModal();
+    });
+    
+    clearBrowserMemoryButton?.addEventListener('click', () => {
+        clearSavedLastShow();
+        removeStorage(STORAGE_KEYS.settings);
+        browserSettings = { ...DEFAULT_BROWSER_SETTINGS };
+        considerThreshold = 7.0;
+        mustWatchThreshold = 8.0;
+        document.getElementById('consider-slider').value = considerThreshold;
+        document.getElementById('must-watch-slider').value = mustWatchThreshold;
+        refreshSliderVisuals();
+        applyBrowserSettings();
+        showDefaultWithoutSaving();
+        updateURL('');
+        updateSettingsModal();
+    });
+    
+    updateSettingsModal();
+}
+
+function updateSettingsModal() {
+    const currentShowEl = document.getElementById('settings-current-show');
+    const savedShowEl = document.getElementById('settings-saved-show');
+    const defaultShowEl = document.getElementById('settings-default-show');
+    const storageStatusEl = document.getElementById('settings-storage-status');
+    const rememberShowToggle = document.getElementById('remember-show-toggle');
+    const rememberThresholdsToggle = document.getElementById('remember-thresholds-toggle');
+    const reduceMotionToggle = document.getElementById('reduce-motion-toggle');
+    const savedShow = readStorage(STORAGE_KEYS.lastShow);
+    
+    if (currentShowEl) currentShowEl.textContent = currentShow || 'None';
+    if (savedShowEl) {
+        savedShowEl.textContent = browserSettings.rememberLastShow
+            ? (savedShow || 'Nothing saved')
+            : 'Remembering is off';
+    }
+    if (defaultShowEl) defaultShowEl.textContent = DEFAULT_SHOW;
+    
+    if (storageStatusEl) {
+        storageStatusEl.textContent = browserSettings.rememberLastShow ? 'On' : 'Off';
+        storageStatusEl.classList.toggle('off', !browserSettings.rememberLastShow);
+    }
+    
+    if (rememberShowToggle) rememberShowToggle.checked = browserSettings.rememberLastShow;
+    if (rememberThresholdsToggle) rememberThresholdsToggle.checked = browserSettings.rememberThresholds;
+    if (reduceMotionToggle) reduceMotionToggle.checked = browserSettings.reduceMotion;
+    
+    document.querySelectorAll('.segmented-option[data-density]').forEach(button => {
+        button.classList.toggle('active', button.dataset.density === browserSettings.density);
+    });
+}
+
+function showDefaultWithoutSaving() {
+    const defaultShow = findMatchingShow(DEFAULT_SHOW);
+    if (!defaultShow) return;
+    
+    const searchInput = document.getElementById('show-search');
+    const clearButton = document.getElementById('clear-button');
+    
+    searchInput.value = defaultShow;
+    clearButton.style.display = 'block';
+    displayShow(defaultShow, { remember: false });
+    updateURL('');
 }
 
 function showDropdown(searchTerm) {
@@ -483,17 +744,26 @@ function selectShow(showName) {
 
 function updateURL(showName) {
     const url = new URL(window.location);
-    url.searchParams.set('show', encodeURIComponent(showName));
+    if (showName) {
+        url.searchParams.set('show', showName);
+    } else {
+        url.searchParams.delete('show');
+    }
     url.searchParams.set('consider', considerThreshold.toFixed(1));
     url.searchParams.set('mustWatch', mustWatchThreshold.toFixed(1));
     window.history.pushState({}, '', url);
 }
 
-function displayShow(showName) {
+function displayShow(showName, options = {}) {
+    const { remember = true } = options;
     const episodes = showsData[showName];
     if (!episodes) return;
     
     currentShow = showName;
+    if (remember) {
+        saveLastShow(showName);
+    }
+    updateSettingsModal();
     
     // Filter out episode 0 and episodes without ratings for accurate stats
     const validEpisodes = episodes.filter(ep => ep.episode > 0 && ep.rating > 0);
@@ -512,10 +782,12 @@ function displayShow(showName) {
     totalEpisodesEl.textContent = validEpisodes.length;
     
     const avgRating = validEpisodes.reduce((sum, ep) => sum + ep.rating, 0) / validEpisodes.length;
-    avgRatingEl.textContent = avgRating.toFixed(2);
+    avgRatingEl.textContent = validEpisodes.length ? avgRating.toFixed(2) : '0.00';
     
     const validSeasons = new Set(validEpisodes.map(ep => ep.season));
     totalSeasonsEl.textContent = validSeasons.size;
+    showInfoEl.style.display = 'block';
+    document.getElementById('legend').style.display = 'block';
     
     // Create heatmap
     createHeatmap(episodes);

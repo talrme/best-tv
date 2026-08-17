@@ -40,6 +40,11 @@ An interactive web application that visualizes TV show episode ratings using dyn
 - URL parameters preserve your show selection and threshold settings
 - Share your custom views with friends
 
+### ⚙️ Browser Settings
+- Remembers the last show you viewed on the same browser
+- Optional browser memory for rating thresholds, heatmap density, and reduced motion
+- Settings modal includes controls to forget the saved show or clear Best TV browser memory
+
 ## 🚀 How to Use
 
 1. **View Default Show**: Halt and Catch Fire loads automatically when you first visit
@@ -48,6 +53,7 @@ An interactive web application that visualizes TV show episode ratings using dyn
 4. **Adjust Thresholds**: Use the dual slider to customize rating categories
 5. **Explore Episodes**: Check out the Must Watch Episodes table below
 6. **Share**: Copy the URL to share your view with custom settings
+7. **Tune Settings**: Use the gear button to manage what this browser remembers
 
 ## 🛠️ Technologies Used
 
@@ -73,6 +79,7 @@ Episode data is fetched from a public Google Spreadsheet containing:
 - **Intuitive Layout**: Clear Season/Episode labeling with smart grid alignment
 - **Performance Optimized**: Efficient rendering even for shows with 100+ episodes
 - **Accessibility**: Keyboard navigation and ARIA labels
+- **Browser-local Preferences**: Uses localStorage to remember device-specific settings without affecting shared URLs
 - **Data Accuracy**: Automatically filters out episodes with missing ratings
 
 ## 📱 Responsive Design
@@ -100,7 +107,6 @@ Feel free to fork this repository and submit pull requests with improvements!
 ---
 
 Made with ❤️ for TV lovers everywhere
-
 
 
 
