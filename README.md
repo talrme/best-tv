@@ -14,8 +14,8 @@ An interactive web application that visualizes TV show episode ratings using dyn
 - Color-coded cells: Green (Must Watch), Yellow (Consider), Red (Skip)
 - Smart grid alignment that handles seasons with varying episode counts
 - Hover over any episode to see detailed information including title, rating, and votes
+- Click or tap any episode to open a details modal with the same info and an IMDb link
 - Smooth animations when loading new shows
-- Click any cell to open the episode on IMDb
 
 ### 🔍 Smart Search
 - Loads with Halt and Catch Fire by default for immediate exploration
@@ -107,6 +107,4 @@ Feel free to fork this repository and submit pull requests with improvements!
 ---
 
 Made with ❤️ for TV lovers everywhere
-
-
 

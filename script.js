@@ -23,6 +23,7 @@ let considerThreshold = 7.0;
 let disableAnimation = false;
 let browserSettings = loadBrowserSettings();
 let refreshSliderVisuals = () => {};
+let activeEpisodeCell = null;
 
 function readStorage(key) {
     try {
@@ -119,6 +120,11 @@ function applyBrowserSettings() {
     document.body.classList.toggle('compact-heatmap', browserSettings.density === 'compact');
     document.body.classList.toggle('reduce-motion', browserSettings.reduceMotion);
     updateSettingsModal();
+}
+
+function syncModalOpenState() {
+    const modalOpen = document.querySelector('.settings-modal.active, .episode-modal.active');
+    document.body.classList.toggle('modal-open', Boolean(modalOpen));
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -267,8 +273,9 @@ function parseCSV(csv) {
     const votesIdx = columnMap['votes'];
     const imdbIdx = columnMap['imdb link'] || columnMap['imdblink'] || columnMap['link'];
     const showIdx = columnMap['show'];
+    const descriptionIdx = columnMap['description'] ?? columnMap['plot'] ?? columnMap['summary'] ?? columnMap['overview'];
     
-    console.log('Column indices:', { seasonIdx, episodeIdx, titleIdx, ratingIdx, votesIdx, imdbIdx, showIdx });
+    console.log('Column indices:', { seasonIdx, episodeIdx, titleIdx, ratingIdx, votesIdx, imdbIdx, showIdx, descriptionIdx });
     
     // Parse data rows
     for (let i = 1; i < lines.length; i++) {
@@ -289,7 +296,8 @@ function parseCSV(csv) {
             rating: parseFloat(fields[ratingIdx]) || 0,
             votes: parseInt(fields[votesIdx]?.replace(/,/g, '')) || 0,
             imdbLink: fields[imdbIdx] || '',
-            show: fields[showIdx] || ''
+            show: fields[showIdx] || '',
+            description: descriptionIdx !== undefined ? fields[descriptionIdx] || '' : ''
         };
         
         // Validate that we have valid data
@@ -335,6 +343,7 @@ function setupEventListeners() {
     const tooltipMustWatch = document.getElementById('tooltip-must-watch');
     let arrowClicked = false;
     setupSettingsControls();
+    setupEpisodeModalControls();
     
     // Function to update slider visualization
     function updateSliderVisuals() {
@@ -555,14 +564,14 @@ function setupSettingsControls() {
         updateSettingsModal();
         settingsModal.classList.add('active');
         settingsModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
+        syncModalOpenState();
         closeSettingsButton?.focus();
     }
     
     function closeSettings() {
         settingsModal.classList.remove('active');
         settingsModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
+        syncModalOpenState();
         settingsButton.focus();
     }
     
@@ -689,6 +698,100 @@ function showDefaultWithoutSaving() {
     clearButton.style.display = 'block';
     displayShow(defaultShow, { remember: false });
     updateURL('');
+}
+
+function setupEpisodeModalControls() {
+    const episodeModal = document.getElementById('episode-modal');
+    const closeEpisodeButton = document.getElementById('close-episode-modal');
+    
+    if (!episodeModal) return;
+    
+    closeEpisodeButton?.addEventListener('click', () => closeEpisodeModal());
+    
+    episodeModal.addEventListener('click', (event) => {
+        if (event.target === episodeModal) {
+            closeEpisodeModal();
+        }
+    });
+    
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && episodeModal.classList.contains('active')) {
+            closeEpisodeModal();
+        }
+    });
+}
+
+function getRatingCategory(rating) {
+    if (rating >= mustWatchThreshold) return 'Must Watch';
+    if (rating >= considerThreshold) return 'Consider';
+    return 'Skip';
+}
+
+function openEpisodeModal(episode, sourceCell = null) {
+    const episodeModal = document.getElementById('episode-modal');
+    const titleEl = document.getElementById('episode-modal-title');
+    const metaEl = document.getElementById('episode-modal-meta');
+    const showEl = document.getElementById('episode-modal-show');
+    const votesEl = document.getElementById('episode-modal-votes');
+    const categoryEl = document.getElementById('episode-modal-category');
+    const ratingCardEl = document.getElementById('episode-modal-rating');
+    const ratingNumberEl = ratingCardEl?.querySelector('.rating-number');
+    const descriptionEl = document.getElementById('episode-modal-description');
+    const imdbLinkEl = document.getElementById('episode-modal-imdb');
+    const closeEpisodeButton = document.getElementById('close-episode-modal');
+    
+    if (!episodeModal || !episode) return;
+    
+    activeEpisodeCell = sourceCell;
+    hideTooltip();
+    
+    const rating = Number(episode.rating) || 0;
+    const category = getRatingCategory(rating);
+    const votes = Number(episode.votes) || 0;
+    const description = episode.description?.trim();
+    
+    titleEl.textContent = episode.title || 'Untitled episode';
+    metaEl.textContent = `Season ${episode.season}, Episode ${episode.episode}`;
+    showEl.textContent = episode.show || currentShow || 'Unknown show';
+    votesEl.textContent = votes.toLocaleString();
+    categoryEl.textContent = category;
+    ratingNumberEl.textContent = rating.toFixed(1);
+    ratingCardEl.dataset.category = category.toLowerCase().replace(/\s+/g, '-');
+    
+    if (description) {
+        descriptionEl.textContent = description;
+        descriptionEl.classList.remove('is-empty');
+    } else {
+        descriptionEl.textContent = 'No episode description is available in the current sheet data yet.';
+        descriptionEl.classList.add('is-empty');
+    }
+    
+    if (episode.imdbLink) {
+        imdbLinkEl.href = episode.imdbLink;
+        imdbLinkEl.style.display = 'inline-flex';
+    } else {
+        imdbLinkEl.removeAttribute('href');
+        imdbLinkEl.style.display = 'none';
+    }
+    
+    episodeModal.classList.add('active');
+    episodeModal.setAttribute('aria-hidden', 'false');
+    syncModalOpenState();
+    closeEpisodeButton?.focus();
+}
+
+function closeEpisodeModal() {
+    const episodeModal = document.getElementById('episode-modal');
+    if (!episodeModal) return;
+    
+    episodeModal.classList.remove('active');
+    episodeModal.setAttribute('aria-hidden', 'true');
+    syncModalOpenState();
+    
+    if (activeEpisodeCell && document.body.contains(activeEpisodeCell)) {
+        activeEpisodeCell.focus();
+    }
+    activeEpisodeCell = null;
 }
 
 function showDropdown(searchTerm) {
@@ -917,6 +1020,14 @@ function createHeatmap(episodes) {
                 cell.dataset.season = episode.season;
                 cell.dataset.episode = episode.episode;
                 cell.dataset.imdb = episode.imdbLink;
+                cell.dataset.show = episode.show || currentShow || '';
+                cell.dataset.description = episode.description || '';
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('tabindex', '0');
+                cell.setAttribute(
+                    'aria-label',
+                    `${episode.show || currentShow}, ${episode.title}, season ${episode.season}, episode ${episode.episode}, rating ${rating.toFixed(1)}. Open episode details.`
+                );
                 
                 // Add staggered animation delay with max time cap (unless disabled)
                 if (disableAnimation) {
@@ -927,9 +1038,16 @@ function createHeatmap(episodes) {
                 }
                 cellCounter++;
                 
-                // Add click handler to open IMDB
+                // Open a details modal on click/tap; the modal contains the IMDb link.
                 cell.addEventListener('click', () => {
-                    window.open(episode.imdbLink, '_blank');
+                    openEpisodeModal(episode, cell);
+                });
+                
+                cell.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openEpisodeModal(episode, cell);
+                    }
                 });
                 
                 // Add hover tooltip
@@ -971,6 +1089,7 @@ function showTooltip(e) {
     const votes = cell.dataset.votes;
     const season = cell.dataset.season;
     const episode = cell.dataset.episode;
+    const category = getRatingCategory(Number(rating) || 0);
     
     tooltip.innerHTML = `
         <div class="tooltip-title">${title}</div>
@@ -978,7 +1097,8 @@ function showTooltip(e) {
             <div>Season ${season}, Episode ${episode}</div>
             <div>Rating: ${rating} ⭐</div>
             <div>Votes: ${parseInt(votes).toLocaleString()}</div>
-            <div style="margin-top: 6px; opacity: 0.8;">Click to view on IMDB</div>
+            <div>${category}</div>
+            <div style="margin-top: 6px; opacity: 0.8;">Click for episode details</div>
         </div>
     `;
     

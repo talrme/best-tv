@@ -1287,6 +1287,187 @@ body.compact-heatmap .row-label {
     box-shadow: 0 6px 14px rgba(192, 57, 43, 0.12);
 }
 
+.episode-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(20, 24, 42, 0.58);
+    backdrop-filter: blur(8px);
+}
+
+.episode-modal.active {
+    display: flex;
+    animation: modalFadeIn 0.22s ease;
+}
+
+.episode-panel {
+    width: min(520px, 100%);
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid rgba(76, 175, 80, 0.18);
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(17, 24, 39, 0.34);
+    animation: settingsSlideUp 0.24s ease;
+}
+
+.episode-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.16), rgba(102, 126, 234, 0.12));
+    border-bottom: 1px solid rgba(44, 62, 80, 0.08);
+}
+
+.episode-modal-meta {
+    color: #667eea;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.episode-modal-header h2 {
+    color: #2c3e50;
+    font-size: 1.55rem;
+    line-height: 1.15;
+    margin-top: 4px;
+}
+
+.episode-modal-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.82);
+    color: #2c3e50;
+    cursor: pointer;
+    font-size: 2rem;
+    font-weight: 300;
+    line-height: 1;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.episode-modal-close:hover {
+    background: #fff;
+    color: #e74c3c;
+    transform: rotate(90deg);
+}
+
+.episode-modal-close:focus-visible {
+    outline: 3px solid rgba(102, 126, 234, 0.3);
+    outline-offset: 2px;
+}
+
+.episode-modal-body {
+    padding: 24px;
+}
+
+.episode-rating-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: rgba(76, 175, 80, 0.12);
+    border: 1px solid rgba(76, 175, 80, 0.24);
+    color: #2e7d32;
+    margin-bottom: 16px;
+}
+
+.episode-rating-card[data-category="consider"] {
+    background: rgba(255, 193, 7, 0.16);
+    border-color: rgba(255, 193, 7, 0.32);
+    color: #9a6a00;
+}
+
+.episode-rating-card[data-category="skip"] {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.22);
+    color: #c0392b;
+}
+
+.rating-number {
+    font-size: 2.35rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.rating-label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.episode-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.episode-detail-grid div {
+    padding: 12px;
+    border-radius: 10px;
+    background: #fbfcff;
+    border: 1px solid #edf0f5;
+}
+
+.detail-label {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.episode-detail-grid strong {
+    display: block;
+    color: #2c3e50;
+    font-size: 0.92rem;
+    line-height: 1.25;
+    margin-top: 4px;
+}
+
+.episode-modal-description {
+    color: #2c3e50;
+    font-size: 0.96rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.episode-modal-description.is-empty {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.episode-imdb-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #f5c518;
+    color: #111;
+    font-size: 0.92rem;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.episode-imdb-link:hover {
+    background: #e6b800;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
 @media (max-width: 768px) {
     body {
         padding: 12px;
@@ -1361,14 +1542,28 @@ body.compact-heatmap .row-label {
         padding: 0;
     }
 
-    .settings-panel {
+    .settings-panel,
+    .episode-panel {
         width: 100%;
         max-height: 92vh;
         border-radius: 18px 18px 0 0;
     }
 
+    .episode-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
     .settings-header {
         padding: 20px;
+    }
+
+    .episode-modal-header {
+        padding: 20px;
+    }
+
+    .episode-modal-header h2 {
+        font-size: 1.35rem;
     }
 
     .settings-body {
@@ -1376,7 +1571,17 @@ body.compact-heatmap .row-label {
         padding: 20px;
     }
 
+    .episode-modal-body {
+        max-height: calc(92vh - 90px);
+        overflow-y: auto;
+        padding: 20px;
+    }
+
     .settings-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .episode-detail-grid {
         grid-template-columns: 1fr;
     }
 
