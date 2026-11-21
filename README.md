@@ -4,6 +4,8 @@
 
 **To add new shows:** [Google Colab notebook](https://colab.research.google.com/drive/1Bxuls9Ig4wuxerzQfcHJ0wRcz59XolU2#scrollTo=KsqTdDj--irx)
 
+**Best TV 2.0 planning:** [Next steps and AI implementation handoff](NEXT_STEPS_BEST_TV_2.0.md) — personal-use requirements, batch additions, Firestore and GitHub Actions refresh design, setup, and acceptance criteria. Planning only; the current site still uses Colab and Google Sheets.
+
 An interactive web application that visualizes TV show episode ratings using dynamic heatmaps. Explore your favorite shows and discover which episodes are must-watch!
 
 ## ✨ Features
